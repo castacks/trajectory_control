@@ -7,12 +7,12 @@
 #include <ca_common/Trajectory.h>
 #include <ca_common/math.h>
 
-TX::Trajectory path;
+CA::Trajectory path;
 nav_msgs::Odometry odometry;
 
-TX::Vector3D curr_position;
-TX::Vector3D curr_velocity;
-TX::State curr_state;
+CA::Vector3D curr_position;
+CA::Vector3D curr_velocity;
+CA::State curr_state;
 
 bool isHovering = false;
 int currSeg;
@@ -22,7 +22,7 @@ void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
   path.fromMsg(*msg);
 
   bool onEnd;
-  TX::State closest_state = path.projectOnTrajInterp(curr_state, &onEnd);
+  CA::State closest_state = path.projectOnTrajInterp(curr_state, &onEnd);
   if(onEnd)
     isHovering = true;
   else
@@ -41,7 +41,7 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg)
   curr_position[1] = odometry.pose.pose.position.y;
   curr_position[2] = odometry.pose.pose.position.z;
 
-  curr_velocity = TX::msgc(odometry.twist.twist.linear);
+  curr_velocity = CA::msgc(odometry.twist.twist.linear);
   curr_state.pose.position_m = curr_position;
 
   ROS_DEBUG_STREAM("Got odometry");
@@ -112,12 +112,12 @@ int main(int argc, char **argv)
 
     bool onEnd = true;
     double closestIdx = -1.0;
-    TX::State closest_state;
-    TX::State pursuit_state;
+    CA::State closest_state;
+    CA::State pursuit_state;
 
     while(onEnd && currSeg < path.t.size()-1)
     {
-      TX::Trajectory segment;
+      CA::Trajectory segment;
       segment.t.push_back(path.t[currSeg]);
       segment.t.push_back(path.t[currSeg+1]);
       closest_state = segment.projectOnTrajInterp(curr_state, &onEnd, &closestIdx);
@@ -143,8 +143,8 @@ int main(int argc, char **argv)
       pursuit_state.rates.velocity_mps *= 0;
     }
 
-    TX::Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
-    TX::Vector3D curr_to_closest = closest_state.pose.position_m - curr_position;
+    CA::Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
+    CA::Vector3D curr_to_closest = closest_state.pose.position_m - curr_position;
 
     if(curr_to_closest.norm() > 10.0)
     {
@@ -159,18 +159,18 @@ int main(int argc, char **argv)
       desired_velocity *= maxSpeed;
     }
 
-    TX::Vector3D path_tangent = desired_velocity;
+    CA::Vector3D path_tangent = desired_velocity;
     if(path_tangent.norm() > 0.0)
       path_tangent.normalize();
 
-    TX::Vector3D curr_to_path = curr_to_closest - path_tangent*TX::math_tools::dot(path_tangent,curr_to_closest);
-    TX::Vector3D path_normal = curr_to_path;
+    CA::Vector3D curr_to_path = curr_to_closest - path_tangent*CA::math_tools::dot(path_tangent,curr_to_closest);
+    CA::Vector3D path_normal = curr_to_path;
     if(path_normal.norm() > 0.0)
       path_normal.normalize();
 
-    double cross_track_error = TX::math_tools::dot(curr_to_closest,path_normal);
-    double cross_track_error_d = -1.0*TX::math_tools::dot(curr_velocity,path_normal);
-    double along_track_error_d = desired_velocity.norm() - TX::math_tools::dot(curr_velocity,path_tangent);
+    double cross_track_error = CA::math_tools::dot(curr_to_closest,path_normal);
+    double cross_track_error_d = -1.0*CA::math_tools::dot(curr_velocity,path_normal);
+    double along_track_error_d = desired_velocity.norm() - CA::math_tools::dot(curr_velocity,path_tangent);
 
     crossTrackIntegrator += cross_track_error;
     alongTrackIntegrator += along_track_error_d;
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
     //std::cout << "Path Tangent" << std::endl << path_tangent << std::endl;
 
 
-    TX::Vector3D command = desired_velocity +
+    CA::Vector3D command = desired_velocity +
                            u_cross_track*path_normal +
                            u_along_track*path_tangent;
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
     }
 
     geometry_msgs::Vector3 velocity_msg;
-    velocity_msg = TX::msgc(command);
+    velocity_msg = CA::msgc(command);
 
     std_msgs::Float64 heading_msg;
     heading_msg.data = pursuit_state.pose.orientation_rad[2];
