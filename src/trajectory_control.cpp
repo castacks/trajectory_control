@@ -4,8 +4,8 @@
 #include <std_msgs/Float64.h>
 #include <cstdlib>
 #include <algorithm>
-#include <tx_common/Trajectory.h>
-#include <tx_common/math.h>
+#include <ca_common/Trajectory.h>
+#include <ca_common/math.h>
 
 TX::Trajectory path;
 nav_msgs::Odometry odometry;
@@ -17,7 +17,7 @@ TX::State curr_state;
 bool isHovering = false;
 int currSeg;
 
-void pathCallback(const tx_common::Trajectory::ConstPtr& msg)
+void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 {
   path.fromMsg(*msg);
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   ros::Publisher vel_pub = n.advertise<geometry_msgs::Vector3>("/trajectory_control/velocity", 100);
   ros::Publisher heading_pub = n.advertise<std_msgs::Float64>("/trajectory_control/heading", 100);
 
-  ros::Subscriber path_sub = n.subscribe<tx_common::Trajectory>("/trajectory_control/path", 10, pathCallback);
+  ros::Subscriber path_sub = n.subscribe<ca_common::Trajectory>("/trajectory_control/path", 10, pathCallback);
   ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("/trajectory_control/odometry", 10, odometryCallback);
   
   ros::Rate loop_rate(loopRate);
