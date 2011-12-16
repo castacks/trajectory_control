@@ -138,7 +138,7 @@ int main(int argc, char **argv)
 
     if(isHovering)
     {
-      closest_state = path.t[path.t.size()-1].state;
+      closest_state = path.t[path.t.size()-1];
       closest_state.rates.velocity_mps *= 0;
       pursuit_state.rates.velocity_mps *= 0;
     }
