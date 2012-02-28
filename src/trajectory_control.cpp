@@ -100,13 +100,13 @@ int main(int argc, char **argv)
 
     if((ros::Time::now() - odometry.header.stamp).toSec() > 1.0)
     {
-      ROS_DEBUG_STREAM("Odometry is more than one second old, no command issued");
+      ROS_ERROR_STREAM("Trajectory_control: Odometry is more than one second old, no command issued");
       continue;
     }
 
     if(path.t.size() < 1)
     {
-      ROS_DEBUG_STREAM("Path does not contain any waypoints, no command issued");
+      ROS_ERROR_STREAM("Trajectory_control: Path does not contain any waypoints, no command issued");
       continue;
     }
 
@@ -148,13 +148,13 @@ int main(int argc, char **argv)
 
     if(curr_to_closest.norm() > 10.0)
     {
-      ROS_DEBUG_STREAM("Greater than 10 meters from path, no command issued");
+      ROS_ERROR_STREAM("Trajectory_control: Greater than 10 meters from path, no command issued");
       continue;
     }
 
     if(desired_velocity.norm() > maxSpeed)
     {
-      ROS_DEBUG_STREAM("Commanded path exceeds maximum allowed speed");
+      ROS_WARN_STREAM("Trajectory_control: Commanded path exceeds maximum allowed speed");
       desired_velocity /= desired_velocity.norm();
       desired_velocity *= maxSpeed;
     }
