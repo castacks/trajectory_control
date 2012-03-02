@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
     if((ros::Time::now() - odometry.header.stamp).toSec() > 1.0)
     {
-      ROS_ERROR_STREAM("Trajectory_control: Odometry is more than one second old, no command issued");
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued");
       continue;
     }
 
