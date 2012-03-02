@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     if(path.t.size() < 1)
     {
-      ROS_ERROR_STREAM("Trajectory_control: Path does not contain any waypoints, no command issued");
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Path does not contain any waypoints, no command issued");
       continue;
     }
 
