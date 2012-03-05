@@ -15,7 +15,7 @@ CA::Vector3D curr_velocity;
 CA::State curr_state;
 
 bool isHovering = false;
-int currSeg;
+unsigned int currSeg;
 
 void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 {
