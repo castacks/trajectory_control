@@ -26,5 +26,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(trajectory_control src/trajectory_control.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+rosbuild_add_executable(trajectory_control src/trajectory_control.cpp)
+rosbuild_add_executable(plot_traj_control src/plotController.cpp)

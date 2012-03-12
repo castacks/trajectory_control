@@ -1,0 +1,4 @@
+<launch>
+  <node name="plot_traj_control" pkg="trajectory_control" type="plot_traj_control" output="screen">
+  </node>
+</launch>

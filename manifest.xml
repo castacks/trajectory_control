@@ -13,6 +13,8 @@
   <depend package="nav_msgs"/>
   <depend package="roscpp"/>
   <depend package="ca_common"/>
+  <depend package="visualization_msgs"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 
