@@ -156,13 +156,13 @@ int main(int argc, char **argv)
 
 		if((ros::Time::now() - odometry.header.stamp).toSec() > 1.0)
 		{
-			ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued");
+			ROS_INFO_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued");
 			continue;
 		}
 
 		if(path.t.size() < 1)
 		{
-			ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Path does not contain any waypoints, no command issued");
+			ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
 			continue;
 		}
 
@@ -190,6 +190,9 @@ int main(int argc, char **argv)
 		bool nearingEnd;
 //		std::cout << "Idx: " << closestIdx << " lookAhead: " << lookAhead << std::endl;
 		pursuit_state = path.lookAhead(closestIdx, lookAhead, &nearingEnd);
+		if (nearingEnd)
+			pursuit_state = closest_state;
+
 		//std::cout << "Pursuit State:" << std::endl << pursuit_state.pose.position_m << std::endl;
 
 		if(onEnd)
@@ -199,7 +202,7 @@ int main(int argc, char **argv)
 		{
 			closest_state = path.t[path.t.size()-1];
 			closest_state.rates.velocity_mps *= 0;
-//			pursuit_state.rates.velocity_mps *= 0;
+      //pursuit_state.rates.velocity_mps *= 0;
 			pursuit_state = closest_state;
 		}
 
@@ -208,13 +211,13 @@ int main(int argc, char **argv)
 
 		if(curr_to_closest.norm() > 10.0)
 		{
-			ROS_ERROR_STREAM("Trajectory_control: Greater than 10 meters from path, no command issued");
+			ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Greater than 10 meters from path, no command issued");
 			continue;
 		}
 
 		if(desired_velocity.norm() > maxSpeed)
 		{
-			ROS_WARN_STREAM("Trajectory_control: Commanded path exceeds maximum allowed speed");
+			ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed");
 			desired_velocity /= desired_velocity.norm();
 			desired_velocity *= maxSpeed;
 		}

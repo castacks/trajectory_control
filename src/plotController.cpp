@@ -55,6 +55,11 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
 	world_vel(1) = msg->twist.twist.linear.y;
 	world_vel(2) = msg->twist.twist.linear.z;
 
+  if (world_vel.norm() > 1000)
+    {
+      world_vel = world_vel.normalized() * 1000;
+    }
+
 	Eigen::Vector3d body_vel = q_w_i.inverse()*world_vel;
 
 	end.x = body_vel(0);
