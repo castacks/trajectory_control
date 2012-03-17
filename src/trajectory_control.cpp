@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	double alongTrackP;
 	double alongTrackI;
+	double alongTrackD;
 
 	double crossTrackP;
 	double crossTrackI;
@@ -124,9 +125,13 @@ int main(int argc, char **argv)
 	double alongTrackIMax;
 	double crossTrackIMax;
 
+	double prev_along_track_error = 0.0;
+	double along_track_error = 0.0;
+	double prev_cross_track_error = 0;
 
 	n.param("/trajectory_control/alongTrackP", alongTrackP, 0.0);
 	n.param("/trajectory_control/alongTrackI", alongTrackI, 0.0);
+	n.param("/trajectory_control/alongTrackD", alongTrackD, 0.0);
 	n.param("/trajectory_control/alongTrackIMax", alongTrackIMax, 0.0);
 
 	n.param("/trajectory_control/crossTrackP", crossTrackP, 0.0);
@@ -191,8 +196,11 @@ int main(int argc, char **argv)
 //		std::cout << "Idx: " << closestIdx << " lookAhead: " << lookAhead << std::endl;
 		pursuit_state = path.lookAhead(closestIdx, lookAhead, &nearingEnd);
 		if (nearingEnd)
+		{
+			//closest_state.rates.velocity_mps *= 0;
 			pursuit_state = closest_state;
 
+		}
 		//std::cout << "Pursuit State:" << std::endl << pursuit_state.pose.position_m << std::endl;
 
 		if(onEnd)
@@ -232,7 +240,8 @@ int main(int argc, char **argv)
 			path_normal.normalize();
 
 		double cross_track_error = CA::math_tools::dot(curr_to_closest,path_normal);
-		double cross_track_error_d = -1.0*CA::math_tools::dot(curr_velocity,path_normal);
+		//double cross_track_error_d = -1.0*CA::math_tools::dot(curr_velocity,path_normal);
+		double cross_track_error_d = cross_track_error - prev_cross_track_error;
 		double along_track_error_d = desired_velocity.norm() - CA::math_tools::dot(curr_velocity,path_tangent);
 
 		crossTrackIntegrator += cross_track_error;
@@ -249,6 +258,7 @@ int main(int argc, char **argv)
 			alongTrackIntegrator = -alongTrackIMax;
 
 
+
 		double u_cross_track = crossTrackP * cross_track_error +
 				crossTrackI * crossTrackIntegrator +
 				crossTrackD * cross_track_error_d;
@@ -256,7 +266,11 @@ int main(int argc, char **argv)
 		//std::cout << "Cross Track U" << std::endl << u_cross_track << std::endl;
 
 		double u_along_track = alongTrackP * along_track_error_d +
-				alongTrackI * alongTrackIntegrator;
+				alongTrackI * alongTrackIntegrator +
+				alongTrackD * (along_track_error_d - prev_along_track_error);
+
+		prev_cross_track_error = cross_track_error;
+		prev_along_track_error = along_track_error_d;
 
 		//std::cout << "Along Track U" << std::endl << u_along_track << std::endl;
 
