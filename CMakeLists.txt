@@ -22,11 +22,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#target_link_libraries(example ${PROJECT_NAME})
+rosbuild_add_library(trajectoryControlLib src/trajectory_control_lib.cpp)
+
 
 rosbuild_add_executable(trajectory_control src/trajectory_control.cpp)
-rosbuild_add_executable(plot_traj_control src/plotController.cpp)
+target_link_libraries(trajectory_control   trajectoryControlLib)
+rosbuild_add_executable(plot_traj_control  src/plotController.cpp)
+target_link_libraries(plot_traj_control    trajectoryControlLib)
