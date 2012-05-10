@@ -98,6 +98,52 @@ void setpointCallback(const geometry_msgs::Vector3::ConstPtr& msg)
 		sp_marker.scale.y = 0.1;
 
 		sp_marker.color.r = 0.0f;
+		sp_marker.color.g = 0.0f;
+		sp_marker.color.b = 1.0f;
+		sp_marker.color.a = 1.0;
+
+		sp_marker.lifetime = ros::Duration();
+
+		geometry_msgs::Point end;
+		Eigen::Vector3d world_vel;
+		world_vel(0) = msg->x;
+		world_vel(1) = msg->y;
+		world_vel(2) = msg->z;
+
+		Eigen::Vector3d body_vel = q_w_i.inverse()*world_vel;
+
+		end.x = body_vel(0);
+		end.y = body_vel(1);
+		end.z = body_vel(2);
+
+		sp_marker.points.push_back(geometry_msgs::Point());
+		sp_marker.points.push_back(end);
+
+		sp_marker.frame_locked = true;
+
+		marker_pub.publish(sp_marker);
+
+		return;
+}
+
+void setpointCallbackGoverned(const geometry_msgs::Vector3::ConstPtr& msg)
+{
+	visualization_msgs::Marker sp_marker;
+		//sp_marker.header = msg->header;
+		sp_marker.header.stamp = odom_marker.header.stamp;
+		sp_marker.header.frame_id = odom_marker.header.frame_id;
+
+
+		sp_marker.ns = "governed_velocity_sp";
+		sp_marker.id = 1;
+
+		sp_marker.type = visualization_msgs::Marker::ARROW;
+		sp_marker.action = visualization_msgs::Marker::ADD;
+
+		sp_marker.scale.x = 0.08;
+		sp_marker.scale.y = 0.1;
+
+		sp_marker.color.r = 0.0f;
 		sp_marker.color.g = 1.0f;
 		sp_marker.color.b = 0.0f;
 		sp_marker.color.a = 1.0;
@@ -124,7 +170,6 @@ void setpointCallback(const geometry_msgs::Vector3::ConstPtr& msg)
 		marker_pub.publish(sp_marker);
 
 		return;
-
 }
 
 
@@ -134,7 +179,8 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle n;
 
-	  ros::Subscriber vel_sub = n.subscribe<geometry_msgs::Vector3>("/hav_control/velocity_sp", 1, setpointCallback);
+	ros::Subscriber vel_sub = n.subscribe<geometry_msgs::Vector3>("/trajectory_control/velocity", 1, setpointCallback);
+	ros::Subscriber velGov_sub = n.subscribe<geometry_msgs::Vector3>("/speedgovernor/velocity_out", 1, setpointCallbackGoverned);
 	ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("/trajectory_control/odometry", 1, odometryCallback);
 	marker_pub = n.advertise<visualization_msgs::Marker>("/trajectory_control/velocity_markers", 1);
 
