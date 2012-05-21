@@ -21,6 +21,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   bool isHovering, nearingEnd;
   State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
   State pursuit_state = path.lookAhead(controlstate.closestIdx, pr.lookAhead, &nearingEnd);
+  ROS_INFO_STREAM("ps: "<<pursuit_state<<" "<<closest_state);
   if (nearingEnd)
     {
       ROS_INFO_STREAM_THROTTLE(10,"Nearing End.");
@@ -30,10 +31,13 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     {
       ROS_INFO_STREAM_THROTTLE(10,"At End.");
       closest_state = path.t[path.t.size()-1];
-      closest_state.rates.velocity_mps *= 0;
+      closest_state.rates.velocity_mps[0] = 0;
+      closest_state.rates.velocity_mps[1] = 0;
+      closest_state.rates.velocity_mps[2] = 0;
       pursuit_state = closest_state;
     }  
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
+   ROS_INFO_STREAM("dv af: "<<desired_velocity);
   Vector3D curr_to_pure    = pursuit_state.pose.position_m - curr_state.pose.position_m;
   Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
   if(curr_to_closest.norm() > pr.trackingThreshold)
@@ -55,7 +59,6 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   Vector3D curr_to_path = curr_to_closest - path_tangent * math_tools::dot(path_tangent,curr_to_closest);
   Vector3D path_normal = curr_to_path;
   math_tools::normalize(path_normal);
-  
   double cross_track_error = math_tools::dot(curr_to_closest, path_normal);
   double cross_track_error_d = cross_track_error - controlstate.prev_cross_track_error;
   double along_track_error_d = desired_velocity.norm() - math_tools::dot(curr_state.rates.velocity_mps , path_tangent);
@@ -77,11 +80,11 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   
   controlstate.prev_cross_track_error = cross_track_error;
   controlstate.prev_along_track_error = along_track_error_d;
-  // ROS_INFO_STREAM("Desired vel: "<<desired_velocity<<" act: "<<curr_state.rates.velocity_mps);
-  //ROS_INFO_STREAM("Cross Track U" <<  u_cross_track);  
-  //ROS_INFO_STREAM("Along Track U" << u_along_track);
-  //ROS_INFO_STREAM("Path Normal"  << path_normal );
-  //ROS_INFO_STREAM("Path Tangent"  << path_tangent);
+  //   ROS_INFO_STREAM("Desired vel: "<<desired_velocity<<" act: "<<curr_state.rates.velocity_mps);
+   //  ROS_INFO_STREAM("Cross Track U" <<  u_cross_track);  
+   //ROS_INFO_STREAM("Along Track U" << u_along_track);
+   //ROS_INFO_STREAM("Path Normal"  << path_normal );
+   //ROS_INFO_STREAM("Path Tangent"  << path_tangent);
    
   Vector3D commandv = desired_velocity +
                      u_cross_track * path_normal +
