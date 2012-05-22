@@ -6,13 +6,21 @@
 #include <trajectory_control/trajectory_control_lib.h>
 
 using namespace CA;
-
+using namespace std;
 
 
 MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State curr_state,  TrajectoryControlState &controlstate, Trajectory &path)
 {
   MkVelocityControlCommand command;
   command.heading = curr_state.pose.orientation_rad[2];
+  //Check precondition of inputs:
+  if(!std::isfinite(dt) || !CA::isfinite(curr_state) || !path.isfinite())
+    {
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Received invalid inputs stopping.");
+      return command;
+    }
+  //Preconditions passed can proceed safely
+
   if(path.t.size() < 1)
     {
       ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
@@ -21,7 +29,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   bool isHovering, nearingEnd;
   State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
   State pursuit_state = path.lookAhead(controlstate.closestIdx, pr.lookAhead, &nearingEnd);
-  ROS_INFO_STREAM("ps: "<<pursuit_state<<" "<<closest_state);
+  ROS_INFO_STREAM("ps: "<<pursuit_state<<" at end" << nearingEnd<<" "<<closest_state<<" at end "<<isHovering);
   if (nearingEnd)
     {
       ROS_INFO_STREAM_THROTTLE(10,"Nearing End.");
@@ -38,7 +46,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }  
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
    ROS_INFO_STREAM("dv af: "<<desired_velocity);
-  Vector3D curr_to_pure    = pursuit_state.pose.position_m - curr_state.pose.position_m;
+   //  Vector3D curr_to_pure    = pursuit_state.pose.position_m - curr_state.pose.position_m;
   Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
   if(curr_to_closest.norm() > pr.trackingThreshold)
     {
@@ -96,6 +104,17 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
   command.velocity = commandv;
   command.heading = pursuit_state.pose.orientation_rad[2];
+  //Check output invariants:
+  if(!command.isfinite())
+    {
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Calculated invalid command. Stopping.");
+      command.velocity[0] = 0;
+      command.velocity[1] = 0;
+      command.velocity[2] = 0;
+      command.heading = 0.0;
+      return command;
+    }
+
   return command;
 }
 

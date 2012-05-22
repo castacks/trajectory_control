@@ -9,6 +9,7 @@
 #include <visualization_msgs/Marker.h>
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
+#include <watchdog/watchdog.h>
 using namespace CA;
 
 visualization_msgs::Marker odom_marker;
@@ -60,7 +61,14 @@ int main(int argc, char **argv)
 	ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("odometry", 10, odometryCallback, hints);
 
 	ros::Rate loop_rate(parameters.loopRate);
-	
+	CA::PetWatchdog pet;	
+	if(!pet.setup(n))
+	  {
+	    ROS_ERROR_STREAM("Was not able to setup watchdog");
+	    return -1;
+	  }
+
+	double dt = 1/parameters.loopRate;
 	while (ros::ok())
 	{
 		loop_rate.sleep();
@@ -72,13 +80,18 @@ int main(int argc, char **argv)
 		  continue;
 		}
 
+		if(!std::isfinite(dt) || !isfinite(curr_state) || !path.isfinite())
+		  pet.fault();
+		else
+		  pet.alive();
 		if(path.t.size() < 1)
 		{
 			ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
 			continue;
 		}
 
-		MkVelocityControlCommand command = controller.positionControl(1.0/parameters.loopRate,curr_state,controllerState,path);
+		
+		MkVelocityControlCommand command = controller.positionControl(dt,curr_state,controllerState,path);
 
 		geometry_msgs::Vector3 velocity_msg;
 		velocity_msg = CA::msgc(command.velocity);
