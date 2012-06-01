@@ -26,27 +26,31 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
       ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
       return command;
     }
+
   bool isHovering, nearingEnd;
   State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
-  State pursuit_state = path.lookAhead(controlstate.closestIdx, pr.lookAhead, &nearingEnd);
-  ROS_INFO_STREAM("ps: "<<pursuit_state<<" at end" << nearingEnd<<" "<<closest_state<<" at end "<<isHovering);
+  //This is the state we will control to. This looks ahead based on the current speed to account for control reaction delays.
+  double speed = curr_state.rates.velocity_mps.norm();
+  double lookaheadDist = std::max(0.3,pr.lookAhead * speed);
+  State pursuit_state = path.lookAhead(controlstate.closestIdx, lookaheadDist, &nearingEnd);
+  
+  //Next we also look up if we need to slow down based on our maximum acceleration.
+  double stoppingDistance =  math_tools::stoppingDistance(pr.deccelMax,pr.reactionTime,speed);
+  double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance, &nearingEnd);//Added an offset to prevent problems at low speed
+
   if (nearingEnd)
     {
-      ROS_INFO_STREAM_THROTTLE(10,"Nearing End.");
-      pursuit_state = closest_state;
+      double maxDesiredSpeed = math_tools::stoppingSpeed(pr.deccelMax,pr.reactionTime,distanceToEnd);
+      if(maxDesiredSpeed < 0.5)
+	{
+	  closest_state = pursuit_state;
+	}
+      math_tools::normalize(pursuit_state.rates.velocity_mps);
+      pursuit_state.rates.velocity_mps *=maxDesiredSpeed;
+
     }
-  if(isHovering)
-    {
-      ROS_INFO_STREAM_THROTTLE(10,"At End.");
-      closest_state = path.t[path.t.size()-1];
-      closest_state.rates.velocity_mps[0] = 0;
-      closest_state.rates.velocity_mps[1] = 0;
-      closest_state.rates.velocity_mps[2] = 0;
-      pursuit_state = closest_state;
-    }  
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
-   ROS_INFO_STREAM("dv af: "<<desired_velocity);
-   //  Vector3D curr_to_pure    = pursuit_state.pose.position_m - curr_state.pose.position_m;
+
   Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
   if(curr_to_closest.norm() > pr.trackingThreshold)
     {

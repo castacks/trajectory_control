@@ -25,8 +25,10 @@ namespace CA
     double alongTrackIMax;
     double crossTrackIMax;
     double trackingThreshold;
+    double deccelMax;
+    double reactionTime;
     TrajectoryControlParameters():
-      alongTrackP(0.0),
+    alongTrackP(0.0),
       alongTrackI(0.0),
       alongTrackD(0.0),
       crossTrackP(0.0),
@@ -34,10 +36,12 @@ namespace CA
       crossTrackD(5.0),
       loopRate(5.0),
       maxSpeed(5.0),
-      lookAhead(0.0),
+      lookAhead(0.5),
       alongTrackIMax(0.0),
       crossTrackIMax(5.0),
-      trackingThreshold(10.)
+      trackingThreshold(10.),
+      deccelMax(3.0),
+      reactionTime(0.5)
     {
     }
     bool loadParameters(ros::NodeHandle &n)
@@ -55,7 +59,9 @@ namespace CA
       found = found && n.getParam("loopRate", loopRate);
       found = found && n.getParam("maxSpeed", maxSpeed);
       found = found && n.getParam("lookAhead", lookAhead);
-      found = found && n.getParam("trackingThreshold", lookAhead);
+      found = found && n.getParam("trackingThreshold", trackingThreshold);
+      found = found && n.getParam("deccelMax", deccelMax);
+      found = found && n.getParam("reactionTime", reactionTime);
       return found;
     }
   };
