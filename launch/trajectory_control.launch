@@ -1,19 +1,19 @@
 <launch>
   <node name="trajectory_control" pkg="trajectory_control" type="trajectory_control" output="screen">
     
-    <param name="alongTrackP" type="double" value="0.0" />
-    <param name="alongTrackI" type="double" value="0.0" />
-    <param name="alongTrackD" type="double" value="0.0" />
-    <param name="alongTrackIMax" type="double" value="1.0" />
 
     <param name="crossTrackP" type="double" value="0.4" />
     <param name="crossTrackI" type="double" value="0.04" />
     <param name="crossTrackD" type="double" value="0.8" />
     <param name="crossTrackIMax" type="double" value="1.0" />
 
+    <param name="crossTrackPZ" type="double" value="0.4" />
+    <param name="crossTrackDZ" type="double" value="0.8" />
+
     <param name="loopRate" type="double" value="10.0" />
-    <param name="maxSpeed" type="double" value="3.0" />
+    <param name="maxSpeed" type="double" value="4.0" />
     <param name="lookAhead" type="double" value="1.0" />
+    <param name="lookAheadAngle" type="double" value="1.0" />
     <param name="trackingThreshold" type="double" value="10.0" />
 
   </node>

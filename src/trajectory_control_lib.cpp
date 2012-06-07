@@ -21,33 +21,37 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
   //Preconditions passed can proceed safely
 
-  if(path.t.size() < 1)
+  if(path.size() < 1)
     {
       ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
       return command;
     }
 
-  bool isHovering, nearingEnd;
+  bool isHovering, nearingEnd, sharpCorner;
   State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
+
   //This is the state we will control to. This looks ahead based on the current speed to account for control reaction delays.
   double speed = curr_state.rates.velocity_mps.norm();
   double lookaheadDist = std::max(0.3,pr.lookAhead * speed);
-  State pursuit_state = path.lookAhead(controlstate.closestIdx, lookaheadDist, &nearingEnd);
-  
+  State pursuit_state = path.lookAheadMaxAngle(controlstate.closestIdx, lookaheadDist,pr.lookAheadAngle, &nearingEnd);
   //Next we also look up if we need to slow down based on our maximum acceleration.
   double stoppingDistance =  math_tools::stoppingDistance(pr.deccelMax,pr.reactionTime,speed);
-  double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance, &nearingEnd);//Added an offset to prevent problems at low speed
+  double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance,pr.lookAheadAngle, &nearingEnd, &sharpCorner);//Added an offset to prevent problems at low speed
 
   if (nearingEnd)
     {
+
       double maxDesiredSpeed = math_tools::stoppingSpeed(pr.deccelMax,pr.reactionTime,distanceToEnd);
-      if(maxDesiredSpeed < 0.5)
+
+      if(maxDesiredSpeed < 0.5 || sharpCorner)
 	{
+	  double az = closest_state.pose.position_m[2];
 	  closest_state = pursuit_state;
+	  closest_state.pose.position_m[2] = az;
 	}
       math_tools::normalize(pursuit_state.rates.velocity_mps);
       pursuit_state.rates.velocity_mps *=maxDesiredSpeed;
-
+      
     }
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
 
@@ -60,12 +64,13 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   
   if(desired_velocity.norm() > pr.maxSpeed)
     {
-      ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed");
+      ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed"<<desired_velocity.norm()<<" > "<<pr.maxSpeed);
       math_tools::normalize(desired_velocity);
       desired_velocity *= pr.maxSpeed;
     }
   
   //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
+  
   Vector3D path_tangent = desired_velocity;
   math_tools::normalize( path_tangent);
   Vector3D curr_to_path = curr_to_closest - path_tangent * math_tools::dot(path_tangent,curr_to_closest);
@@ -73,35 +78,38 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   math_tools::normalize(path_normal);
   double cross_track_error = math_tools::dot(curr_to_closest, path_normal);
   double cross_track_error_d = cross_track_error - controlstate.prev_cross_track_error;
-  double along_track_error_d = desired_velocity.norm() - math_tools::dot(curr_state.rates.velocity_mps , path_tangent);
+
   
   controlstate.crossTrackIntegrator += cross_track_error;
-  controlstate.alongTrackIntegrator += along_track_error_d;
+
   controlstate.crossTrackIntegrator  = math_tools::Limit(pr.crossTrackIMax,controlstate.crossTrackIntegrator);
-  controlstate.alongTrackIntegrator  = math_tools::Limit(pr.alongTrackIMax,controlstate.alongTrackIntegrator);
+
   
   double u_cross_track = pr.crossTrackP * cross_track_error +
                          pr.crossTrackI * controlstate.crossTrackIntegrator +
-                         pr.crossTrackD * cross_track_error_d;
+                         pr.crossTrackD * cross_track_error_d/dt;
   
 
   
-  double u_along_track = pr.alongTrackP * along_track_error_d +
-                         pr.alongTrackI * controlstate.alongTrackIntegrator +
-                         pr.alongTrackD * (along_track_error_d - controlstate.prev_along_track_error);
-  
   controlstate.prev_cross_track_error = cross_track_error;
-  controlstate.prev_along_track_error = along_track_error_d;
+
   //   ROS_INFO_STREAM("Desired vel: "<<desired_velocity<<" act: "<<curr_state.rates.velocity_mps);
    //  ROS_INFO_STREAM("Cross Track U" <<  u_cross_track);  
-   //ROS_INFO_STREAM("Along Track U" << u_along_track);
+
    //ROS_INFO_STREAM("Path Normal"  << path_normal );
    //ROS_INFO_STREAM("Path Tangent"  << path_tangent);
    
-  Vector3D commandv = desired_velocity +
-                     u_cross_track * path_normal +
-                     u_along_track * path_tangent;
-    if(commandv.norm() > pr.maxSpeed)
+  Vector3D commandv = desired_velocity +  u_cross_track * path_normal;
+  
+  //Do separate terms for the z control:
+  double z_trackerror =   curr_to_closest[2] - controlstate.prev_z_track_error;
+  controlstate.prev_z_track_error = curr_to_closest[2];
+
+  double ztrack =pr.crossTrackPZ * curr_to_closest[2] +
+                         pr.crossTrackDZ * z_trackerror/dt;
+  commandv[2] = desired_velocity[2] + ztrack;
+  //ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
+  if(commandv.norm() > pr.maxSpeed)
     {
 
       commandv *= (pr.maxSpeed/commandv.norm());

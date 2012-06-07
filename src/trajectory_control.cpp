@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 		  pet.fault();
 		else
 		  pet.alive();
-		if(path.t.size() < 1)
+		if(path.size() < 1)
 		{
 			ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
 			continue;
