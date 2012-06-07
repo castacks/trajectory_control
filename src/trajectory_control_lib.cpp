@@ -108,7 +108,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   double ztrack =pr.crossTrackPZ * curr_to_closest[2] +
                          pr.crossTrackDZ * z_trackerror/dt;
   commandv[2] = desired_velocity[2] + ztrack;
-  //ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
+  //  ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
   if(commandv.norm() > pr.maxSpeed)
     {
 
