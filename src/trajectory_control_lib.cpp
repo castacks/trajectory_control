@@ -12,6 +12,8 @@ using namespace std;
 MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State curr_state,  TrajectoryControlState &controlstate, Trajectory &path)
 {
   MkVelocityControlCommand command;
+  command.headingrate = 0.0;
+  command.acceleration[0] = 0;  command.acceleration[1] = 0;  command.acceleration[2] = 0;
   command.heading = curr_state.pose.orientation_rad[2];
   //Check precondition of inputs:
   if(!std::isfinite(dt) || !CA::isfinite(curr_state) || !path.isfinite())

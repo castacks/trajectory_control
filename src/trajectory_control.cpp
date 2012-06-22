@@ -9,6 +9,7 @@
 #include <visualization_msgs/Marker.h>
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
+#include <trajectory_control/Command.h>
 #include <watchdog/watchdog.h>
 using namespace CA;
 
@@ -53,8 +54,8 @@ int main(int argc, char **argv)
 	    return -1;
 	  }
 	TrajectoryControl controller(parameters);
-	ros::Publisher vel_pub = n.advertise<geometry_msgs::Vector3>("velocity", 100);
-	ros::Publisher heading_pub = n.advertise<std_msgs::Float64>("heading", 100);
+	ros::Publisher command_pub = n.advertise<trajectory_control::Command>("command", 100);
+	
 	marker_pub = n.advertise<visualization_msgs::Marker>("goal_markers", 1);
 	ros::TransportHints hints = ros::TransportHints().udp().tcpNoDelay();
 	ros::Subscriber path_sub = n.subscribe<ca_common::Trajectory>("path", 10, pathCallback);
@@ -69,6 +70,9 @@ int main(int argc, char **argv)
 	  }
 
 	double dt = 1/parameters.loopRate;
+	trajectory_control::Command command;
+	command.header.frame_id = "base_frame";
+	command.header.seq=0;
 	while (ros::ok())
 	{
 		loop_rate.sleep();
@@ -91,19 +95,14 @@ int main(int argc, char **argv)
 		}
 
 		
-		MkVelocityControlCommand command = controller.positionControl(dt,curr_state,controllerState,path);
-
-		geometry_msgs::Vector3 velocity_msg;
-		velocity_msg = CA::msgc(command.velocity);
-
-		std_msgs::Float64 heading_msg;
-		heading_msg.data = command.heading;
-
-		//std::cout << "Commanded Velocity:" << std::endl << velocity_msg << std::endl;
-
-	
-		vel_pub.publish(velocity_msg);
-		heading_pub.publish(heading_msg);
+		MkVelocityControlCommand commandres = controller.positionControl(dt,curr_state,controllerState,path);
+		command.header.stamp = ros::Time::now();
+		command.header.seq++;
+		command.velocity     = CA::msgc(commandres.velocity);
+		command.acceleration = CA::msgc(commandres.acceleration);
+		command.heading      = commandres.heading;
+		command.headingrate  = commandres.headingrate;
+		command_pub.publish(command);
 	}
 
 	return 0;
