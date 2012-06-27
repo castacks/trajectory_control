@@ -58,12 +58,15 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
 
   Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
+  double zError = curr_to_closest[2];
+  //Separate x,y from z control 
   if(curr_to_closest.norm() > pr.trackingThreshold)
     {
       ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Greater than 10 meters from path, no command issued");
       return command;
     }
-  
+  curr_to_closest[2] = 0;
+
   if(desired_velocity.norm() > pr.maxSpeed)
     {
       ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed"<<desired_velocity.norm()<<" > "<<pr.maxSpeed);
@@ -104,16 +107,15 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   Vector3D commandv = desired_velocity +  u_cross_track * path_normal;
   
   //Do separate terms for the z control:
-  double z_trackerror =   curr_to_closest[2] - controlstate.prev_z_track_error;
-  controlstate.prev_z_track_error = curr_to_closest[2];
+  double z_trackerror =   zError - controlstate.prev_z_track_error;
+  controlstate.prev_z_track_error = zError;
 
-  double ztrack =pr.crossTrackPZ * curr_to_closest[2] +
+  double ztrack =pr.crossTrackPZ * zError +
                          pr.crossTrackDZ * z_trackerror/dt;
   commandv[2] = desired_velocity[2] + ztrack;
   //  ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
   if(commandv.norm() > pr.maxSpeed)
     {
-
       commandv *= (pr.maxSpeed/commandv.norm());
     }
   command.velocity = commandv;
