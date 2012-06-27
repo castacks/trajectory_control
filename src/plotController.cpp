@@ -8,6 +8,7 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <Eigen/Eigen>
+#include <trajectory_control/Command.h>
 
 
 ros::Publisher marker_pub;
@@ -60,8 +61,9 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
       world_vel = world_vel.normalized() * 1000;
     }
 
-	Eigen::Vector3d body_vel = q_w_i.inverse()*world_vel;
-
+	//Eigen::Vector3d body_vel = q_w_i.inverse()*world_vel;
+	Eigen::Vector3d body_vel = world_vel;
+	
 	end.x = body_vel(0);
 	end.y = body_vel(1);
 	end.z = body_vel(2);
@@ -80,7 +82,7 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
 }
 
 
-void setpointCallback(const geometry_msgs::Vector3::ConstPtr& msg)
+void setpointCallback(const trajectory_control::Command::ConstPtr& msg)
 {
 	visualization_msgs::Marker sp_marker;
 		//sp_marker.header = msg->header;
@@ -106,9 +108,9 @@ void setpointCallback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 		geometry_msgs::Point end;
 		Eigen::Vector3d world_vel;
-		world_vel(0) = msg->x;
-		world_vel(1) = msg->y;
-		world_vel(2) = msg->z;
+		world_vel(0) = msg->velocity.x;
+		world_vel(1) = msg->velocity.y;
+		world_vel(2) = msg->velocity.z;
 
 		Eigen::Vector3d body_vel = q_w_i.inverse()*world_vel;
 
@@ -179,7 +181,7 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle n;
 
-	ros::Subscriber vel_sub = n.subscribe<geometry_msgs::Vector3>("/trajectory_control/velocity", 1, setpointCallback);
+	ros::Subscriber vel_sub = n.subscribe<trajectory_control::Command>("/trajectory_control/command", 1, setpointCallback);
 	ros::Subscriber velGov_sub = n.subscribe<geometry_msgs::Vector3>("/speedgovernor/velocity_out", 1, setpointCallbackGoverned);
 	ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("/trajectory_control/odometry", 1, odometryCallback);
 	marker_pub = n.advertise<visualization_msgs::Marker>("/trajectory_control/velocity_markers", 1);
