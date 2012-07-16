@@ -75,7 +75,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
   
   //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
-  
+  double totalSpeed = std::max(0.5,desired_velocity.norm());
   Vector3D path_tangent = desired_velocity;
   math_tools::normalize( path_tangent);
   Vector3D curr_to_path = curr_to_closest - path_tangent * math_tools::dot(path_tangent,curr_to_closest);
@@ -114,9 +114,9 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
                          pr.crossTrackDZ * z_trackerror/dt;
   commandv[2] = desired_velocity[2] + ztrack;
   //  ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
-  if(commandv.norm() > pr.maxSpeed)
+  if(commandv.norm() > totalSpeed)
     {
-      commandv *= (pr.maxSpeed/commandv.norm());
+      commandv *= (totalSpeed/commandv.norm());
     }
   command.velocity = commandv;
   command.heading = pursuit_state.pose.orientation_rad[2];
