@@ -39,11 +39,11 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   //Next we also look up if we need to slow down based on our maximum acceleration.
   double stoppingDistance =  math_tools::stoppingDistance(pr.deccelMax,pr.reactionTime,speed);
   double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance,pr.lookAheadAngle, &nearingEnd, &sharpCorner);//Added an offset to prevent problems at low speed
-
+  double totalSpeed = std::max(0.5,pursuit_state.rates.velocity_mps.norm());
   if (nearingEnd)
     {
 
-      double maxDesiredSpeed = math_tools::stoppingSpeed(pr.deccelMax,pr.reactionTime,distanceToEnd);
+      double maxDesiredSpeed = std::min(totalSpeed,math_tools::stoppingSpeed(pr.deccelMax,pr.reactionTime,distanceToEnd));
 
       if(maxDesiredSpeed < 0.5 || sharpCorner)
 	{
@@ -56,7 +56,6 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
       
     }
   Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
-
   Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
   double zError = curr_to_closest[2];
   //Separate x,y from z control 
@@ -75,7 +74,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
   
   //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
-  double totalSpeed = std::max(0.5,desired_velocity.norm());
+ 
   Vector3D path_tangent = desired_velocity;
   math_tools::normalize( path_tangent);
   Vector3D curr_to_path = curr_to_closest - path_tangent * math_tools::dot(path_tangent,curr_to_closest);
