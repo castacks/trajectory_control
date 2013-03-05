@@ -119,6 +119,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
   command.velocity = commandv;
   command.heading = pursuit_state.pose.orientation_rad[2];
+
   //Check output invariants:
   if(!command.isfinite())
     {
@@ -126,9 +127,14 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
       command.velocity[0] = 0;
       command.velocity[1] = 0;
       command.velocity[2] = 0;
-      command.heading = 0.0;
+      command.heading = curr_state.pose.orientation_rad[2];
       return command;
     }
+
+  // Safety hover state does not pass heading information
+  if (path.size() == 1 && pursuit_state.pose.orientation_rad[2] == 0.0)
+	  command.heading = curr_state.pose.orientation_rad[2];
+
 
   return command;
 }
