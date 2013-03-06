@@ -123,7 +123,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   //Check output invariants:
   if(!command.isfinite())
     {
-      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Calculated invalid command. Stopping.");
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Calculated invalid command. Going to velocity hold.");
       command.velocity[0] = 0;
       command.velocity[1] = 0;
       command.velocity[2] = 0;
@@ -133,7 +133,10 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
 
   // Safety hover state does not pass heading information
   if (path.size() == 1 && pursuit_state.pose.orientation_rad[2] == 0.0)
+  {
+      ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Invalid heading of exactly 0 radians. Going to yaw rate hold.");
 	  command.heading = curr_state.pose.orientation_rad[2];
+  }
 
 
   return command;
