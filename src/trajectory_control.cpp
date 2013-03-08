@@ -88,10 +88,25 @@ int main(int argc, char **argv)
 		  pet.fault();
 		else
 		  pet.alive();
+
 		if(path.size() < 1)
 		{
-			ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
-			continue;
+			ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
+			ca_common::Trajectory hoverMsg;
+			hoverMsg.header.stamp = ros::Time::now();
+			hoverMsg.header.frame_id = "/world";
+
+			ca_common::TrajectoryPoint hoverTrajPoint;
+			hoverTrajPoint.position.x = curr_state.pose.position_m[0];
+			hoverTrajPoint.position.y = curr_state.pose.position_m[1];
+			hoverTrajPoint.position.z = curr_state.pose.position_m[2];
+			hoverTrajPoint.heading = curr_state.pose.orientation_rad[2];
+
+			hoverMsg.trajectory.push_back(hoverTrajPoint);
+
+			path.fromMsg(hoverMsg);
+			controllerState.closestIdx = 0.0;
+
 		}
 
 		
