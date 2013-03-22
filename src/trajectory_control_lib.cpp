@@ -131,13 +131,14 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
       return command;
     }
 
+/*
   // Safety hover state does not pass heading information
   if (path.size() == 1 && pursuit_state.pose.orientation_rad[2] == 0.0)
   {
       ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Invalid heading of exactly 0 radians. Going to yaw rate hold.");
 	  command.heading = curr_state.pose.orientation_rad[2];
   }
-
+*/
 
   return command;
 }
