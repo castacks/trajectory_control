@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		double timediff = ros::Time::now().toSec() - curr_state.time_s;
 		if(timediff > 1.0)
 		{
-		  ROS_INFO_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued"<<timediff<< " "<< curr_state.time_s);
+		  ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued"<<timediff<< " "<< curr_state.time_s);
 		  continue;
 		}
 
