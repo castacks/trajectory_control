@@ -9,7 +9,7 @@ using namespace CA;
 using namespace std;
 
 
-MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State curr_state,  TrajectoryControlState &controlstate, Trajectory &path)
+MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State curr_state,  TrajectoryControlState &controlstate, Trajectory &path, State &lookahead)
 {
   MkVelocityControlCommand command;
   command.headingrate = 0.0;
@@ -19,6 +19,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   if(!std::isfinite(dt) || !CA::isfinite(curr_state) || !path.isfinite())
     {
       ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Received invalid inputs stopping.");
+      lookahead = curr_state;
       return command;
     }
   //Preconditions passed can proceed safely
@@ -26,6 +27,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   if(path.size() < 1)
     {
       ROS_INFO_STREAM_THROTTLE(10, "Trajectory_control: Path does not contain any waypoints, no command issued");
+      lookahead = curr_state;
       return command;
     }
 
@@ -62,6 +64,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   if(curr_to_closest.norm() > pr.trackingThreshold)
     {
       ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Greater than 10 meters from path, no command issued");
+      lookahead = curr_state;
       return command;
     }
   curr_to_closest[2] = 0;
@@ -128,6 +131,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
       command.velocity[1] = 0;
       command.velocity[2] = 0;
       command.heading = curr_state.pose.orientation_rad[2];
+      lookahead = curr_state;
       return command;
     }
 
@@ -140,6 +144,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
   }
 */
 
+  lookahead = pursuit_state;
   return command;
 }
 

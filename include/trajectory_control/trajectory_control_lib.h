@@ -73,7 +73,7 @@ namespace CA
     TrajectoryControl(TrajectoryControlParameters para=TrajectoryControlParameters()):
       pr(para)
     {}
-    MkVelocityControlCommand positionControl(double dt, CA::State curr_state,  CA::TrajectoryControlState &controlstate, CA::Trajectory &path);
+    MkVelocityControlCommand positionControl(double dt, CA::State curr_state,  CA::TrajectoryControlState &controlstate, CA::Trajectory &path, State &lookahead);
   };
 
 }

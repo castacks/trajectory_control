@@ -55,6 +55,9 @@ int main(int argc, char **argv)
 	  }
 	TrajectoryControl controller(parameters);
 	ros::Publisher command_pub = n.advertise<trajectory_control::Command>("command", 100);
+	ros::Publisher pubLookAheadState = n.advertise<nav_msgs::Odometry>("lookaheadpose", 100);
+	nav_msgs::Odometry lookaheadpose;
+	State lookheadstate;
 	
 	marker_pub = n.advertise<visualization_msgs::Marker>("goal_markers", 1);
 	ros::TransportHints hints = ros::TransportHints().udp().tcpNoDelay();
@@ -110,7 +113,7 @@ int main(int argc, char **argv)
 		}
 
 		
-		MkVelocityControlCommand commandres = controller.positionControl(dt,curr_state,controllerState,path);
+		MkVelocityControlCommand commandres = controller.positionControl(dt,curr_state,controllerState,path,lookheadstate);
 		command.header.stamp = ros::Time::now();
 		command.header.seq++;
 		command.velocity     = CA::msgc(commandres.velocity);
@@ -118,6 +121,12 @@ int main(int argc, char **argv)
 		command.heading      = commandres.heading;
 		command.headingrate  = commandres.headingrate;
 		command_pub.publish(command);
+
+		lookaheadpose = msgc(lookheadstate);
+		lookaheadpose.header = command.header;
+		lookaheadpose.header.frame_id = "world";
+
+		pubLookAheadState.publish(lookaheadpose);
 	}
 
 	return 0;
