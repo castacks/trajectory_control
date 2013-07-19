@@ -23,6 +23,7 @@ CA::Vector3D curr_position;
 CA::Vector3D curr_velocity;
 CA::State curr_state;
 TrajectoryControlState controllerState;
+ros::Time lastPlan;
 
 void pathCallback(const ca_common::Trajectory::ConstPtr& msg);
 void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg);
@@ -31,6 +32,7 @@ void visualizeState(CA::State state, Eigen::Vector3d color, std::string frame_id
 
 void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 {
+	lastPlan = msg->header.stamp;
   path.fromMsg(*msg);
   controllerState.closestIdx = 0.0;
 }
@@ -92,7 +94,9 @@ int main(int argc, char **argv)
 		else
 		  pet.alive();
 
-		if(path.size() < 1)
+		ROS_INFO_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
+
+		if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > 1.0)
 		{
 			ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
 			ca_common::Trajectory hoverMsg;
@@ -131,5 +135,6 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
 
 
