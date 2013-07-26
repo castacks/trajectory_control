@@ -94,7 +94,8 @@ int main(int argc, char **argv)
 		else
 		  pet.alive();
 
-		ROS_INFO_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
+if ((ros::Time::now() - lastPlan).toSec() > 1.0)
+		ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
 
 		if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > 1.0)
 		{
