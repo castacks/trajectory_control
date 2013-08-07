@@ -99,7 +99,7 @@ if ((ros::Time::now() - lastPlan).toSec() > 1.0)
 
 		if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > 1.0)
 		{
-			ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
+			//ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
 			ca_common::Trajectory hoverMsg;
 			hoverMsg.header.stamp = ros::Time::now();
 			hoverMsg.header.frame_id = "/world";
