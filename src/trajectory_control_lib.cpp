@@ -36,6 +36,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     bool isHovering, nearingEnd, sharpCorner;
     State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
 
+
     //This is the state we will control to. This looks ahead based on the current speed to account for control reaction delays.
     double speed = curr_state.rates.velocity_mps.norm();
     double lookaheadDist = std::max(0.3,pr.lookAhead * speed);
@@ -44,6 +45,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     double stoppingDistance =  math_tools::stoppingDistance(pr.deccelMax,pr.reactionTime,speed);
     double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance,pr.lookAheadAngle, &nearingEnd, &sharpCorner);//Added an offset to prevent problems at low speed
     double totalSpeed = std::max(0.5,pursuit_state.rates.velocity_mps.norm());
+    //ROS_ERROR_STREAM("nearingEnd "<< (nearingEnd?1:0) <<" sharpCorner "<<(sharpCorner?1:0) <<" distanceToEnd "<<distanceToEnd<< " stoppingDistance "<<stoppingDistance);
     if (nearingEnd)
     {
 
@@ -79,6 +81,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
 
     //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
+    //ROS_ERROR_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
 
     Vector3D path_tangent = desired_velocity;
     math_tools::normalize( path_tangent);
