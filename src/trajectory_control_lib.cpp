@@ -81,7 +81,8 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
 
     //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
-    //ROS_ERROR_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
+    //ROS_ERROR_STREAM("PATH "<<path);
+    //ROS_ERROR_STREAM(std::fixed<<"curr_state: "<<curr_state.pose.position_m<<" closest_state: "<<closest_state.pose.position_m<<" pursuit_state: "<<pursuit_state.pose.position_m);
 
     Vector3D path_tangent = desired_velocity;
     math_tools::normalize( path_tangent);
