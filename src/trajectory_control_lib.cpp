@@ -36,7 +36,6 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     bool isHovering, nearingEnd, sharpCorner;
     State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
 
-
     //This is the state we will control to. This looks ahead based on the current speed to account for control reaction delays.
     double speed = curr_state.rates.velocity_mps.norm();
     double lookaheadDist = std::max(0.3,pr.lookAhead * speed);
@@ -93,7 +92,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     double cross_track_error_d = cross_track_error - controlstate.prev_cross_track_error;
 
 
-    controlstate.crossTrackIntegrator += cross_track_error;
+    controlstate.crossTrackIntegrator += cross_track_error*dt;
 
     controlstate.crossTrackIntegrator  = math_tools::Limit(pr.crossTrackIMax,controlstate.crossTrackIntegrator);
 
