@@ -4,10 +4,17 @@
 #include <ca_common/math.h>
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
+#include <ca_common/debugPIDcomponents.h>
 
 using namespace CA;
 using namespace std;
 
+void TrajectoryControl::debugInit(ros::NodeHandle &n)
+{
+	n.param("debug", debug, false);
+    pubDebugVXY = n.advertise<ca_common::debugPIDcomponents>("/trajectory_control/debug_vxy_pid", 50);
+    pubDebugThrust = n.advertise<ca_common::debugPIDcomponents>("/trajectory_control/debug_thrust_pid", 50);
+}
 
 MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State curr_state,  TrajectoryControlState &controlstate, Trajectory &path, State &lookahead)
 {
@@ -102,7 +109,14 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
                            pr.crossTrackD * cross_track_error_d/dt;
 
 
-
+	if(debug)
+		{
+			ca_common::debugPIDcomponents debugPIDcomponents;
+			debugPIDcomponents.p=pr.crossTrackP * cross_track_error;
+			debugPIDcomponents.i=pr.crossTrackI * controlstate.crossTrackIntegrator;
+			debugPIDcomponents.d=pr.crossTrackD * cross_track_error_d/dt;
+			pubDebugVXY.publish(debugPIDcomponents);
+		}
     controlstate.prev_cross_track_error = cross_track_error;
 
     //   ROS_INFO_STREAM("Desired vel: "<<desired_velocity<<" act: "<<curr_state.rates.velocity_mps);
@@ -116,7 +130,14 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     //Do separate terms for the z control:
     double z_trackerror =   zError - controlstate.prev_z_track_error;
     controlstate.prev_z_track_error = zError;
-
+	if(debug)
+		{
+			ca_common::debugPIDcomponents debugPIDcomponents;
+			debugPIDcomponents.p=pr.crossTrackPZ * zError;
+			debugPIDcomponents.i=0;
+			debugPIDcomponents.d=pr.crossTrackDZ * z_trackerror/dt;
+			pubDebugThrust.publish(debugPIDcomponents);
+		}
     double ztrack =pr.crossTrackPZ * zError +
                    pr.crossTrackDZ * z_trackerror/dt;
     commandv[2] = desired_velocity[2] + ztrack;

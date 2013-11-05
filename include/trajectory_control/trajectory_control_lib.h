@@ -69,10 +69,13 @@ namespace CA
   class TrajectoryControl
   {
   public:
+    bool debug;
     TrajectoryControlParameters pr;
+    ros::Publisher pubDebugVXY,pubDebugThrust;
     TrajectoryControl(TrajectoryControlParameters para=TrajectoryControlParameters()):
       pr(para)
     {}
+    void debugInit(ros::NodeHandle &n);
     MkVelocityControlCommand positionControl(double dt, CA::State curr_state,  CA::TrajectoryControlState &controlstate, CA::Trajectory &path, State &lookahead);
   };
 

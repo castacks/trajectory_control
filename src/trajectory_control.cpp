@@ -56,6 +56,7 @@ int main(int argc, char **argv)
         return -1;
     }
     TrajectoryControl controller(parameters);
+    controller.debugInit(n);
     ros::Publisher command_pub = n.advertise<trajectory_control::Command>("command", 100);
     ros::Publisher pubLookAheadState = n.advertise<nav_msgs::Odometry>("lookaheadpose", 100);
     nav_msgs::Odometry lookaheadpose;
