@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 
         }
 
-
+		//ROS_ERROR_STREAM("curr_state "<<curr_state<<" path "<<path<<" lookheadstate "<<lookheadstate);
         MkVelocityControlCommand commandres = controller.positionControl(dt,curr_state,controllerState,path,lookheadstate);
         command.header.stamp = ros::Time::now();
         command.header.seq++;
