@@ -10,7 +10,7 @@
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
 #include <trajectory_control/Command.h>
-#include <watchdog/watchdog.h>
+#include <riverine_watchdog/watchdog.h>
 using namespace CA;
 
 visualization_msgs::Marker odom_marker;

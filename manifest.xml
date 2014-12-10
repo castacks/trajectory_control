@@ -16,7 +16,7 @@
   <depend package="mk_model"/>
   <depend package="visualization_msgs"/>
   <depend package="geometry_msgs"/>
-  <depend package="watchdog" />
+  <depend package="riverine_watchdog" />
 </package>
 
 
