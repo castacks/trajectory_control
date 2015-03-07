@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     if(!pet.setup(n))
     {
         ROS_ERROR_STREAM("Was not able to setup watchdog");
-        return -1;
+        //return -1;
     }
 
     double dt = 1/parameters.loopRate;

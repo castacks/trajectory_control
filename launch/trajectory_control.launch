@@ -1,6 +1,5 @@
 <launch>
-  <node name="trajectory_control" pkg="trajectory_control" type="trajectory_control" output="screen">
-    
+  <node name="trajectory_control" pkg="trajectory_control" type="trajectory_control" output="screen">   
 
     <param name="crossTrackP" type="double" value="0.4" />
     <param name="crossTrackI" type="double" value="0.04" />
@@ -15,6 +14,10 @@
     <param name="lookAhead" type="double" value="1.0" />
     <param name="lookAheadAngle" type="double" value="1.0" />
     <param name="trackingThreshold" type="double" value="10.0" />
-
+    <param name="deccelMax" type="double" value="1.0" />
+    <param name="reactionTime" type="double" value="1.0" />
   </node>
 </launch>
+
+
+
