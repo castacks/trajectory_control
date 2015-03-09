@@ -10,7 +10,7 @@
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
 #include <trajectory_control/Command.h>
-#include <riverine_watchdog/watchdog.h>
+//#include <riverine_watchdog/watchdog.h>
 using namespace CA;
 
 visualization_msgs::Marker odom_marker;
@@ -68,12 +68,12 @@ int main(int argc, char **argv)
     ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("odometry", 10, odometryCallback, hints);
 
     ros::Rate loop_rate(parameters.loopRate);
-    CA::PetWatchdog pet;
-    if(!pet.setup(n))
-    {
-        ROS_ERROR_STREAM("Was not able to setup watchdog");
+    //CA::PetWatchdog pet;
+    //if(!pet.setup(n))
+    //{
+    //    ROS_ERROR_STREAM("Was not able to setup watchdog");
         //return -1;
-    }
+    //}
 
     double dt = 1/parameters.loopRate;
     trajectory_control::Command command;
@@ -90,10 +90,10 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if(!std::isfinite(dt) || !isfinite(curr_state) || !path.isfinite())
+        /*if(!std::isfinite(dt) || !isfinite(curr_state) || !path.isfinite())
             pet.fault();
         else
-            pet.alive();
+            pet.alive();*/
 
         if ((ros::Time::now() - lastPlan).toSec() > 1.0)
             ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
