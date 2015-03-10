@@ -49,6 +49,9 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "trajectory_control");
     ros::NodeHandle n("trajectory_control");
+    ros::NodeHandle private_nh("~");
+    double trajectory_expiration_time;
+    private_nh.param<double>("trajectory_expiration_time",trajectory_expiration_time,1.0);
     TrajectoryControlParameters  parameters;
     if(!parameters.loadParameters(n))
     {
@@ -95,10 +98,10 @@ int main(int argc, char **argv)
         else
             pet.alive();*/
 
-        if ((ros::Time::now() - lastPlan).toSec() > 1.0)
+        if ((ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time)
             ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
 
-        if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > 1.0)
+        if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time)
         {
             ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
             ca_common::Trajectory hoverMsg;
