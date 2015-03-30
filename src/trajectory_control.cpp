@@ -2,6 +2,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
 #include <cstdlib>
 #include <algorithm>
 #include <ca_common/Trajectory.h>
@@ -22,6 +23,9 @@ CA::Trajectory path;
 CA::Vector3D curr_position;
 CA::Vector3D curr_velocity;
 CA::State curr_state;
+ca_common::TrajectoryPoint hover_traj_point;
+bool hover;
+
 TrajectoryControlState controllerState;
 ros::Time lastPlan;
 
@@ -40,6 +44,15 @@ void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg)
 {
     curr_state =msgc(*msg);
+}
+
+void setHoverCallback(const std_msgs::String::ConstPtr & msg)
+{
+    hover_traj_point.position.x = curr_state.pose.position_m[0];
+    hover_traj_point.position.y = curr_state.pose.position_m[1];
+    hover_traj_point.position.z = curr_state.pose.position_m[2];
+    hover_traj_point.heading = curr_state.pose.orientation_rad[2];
+    hover = true;
 }
 
 
@@ -69,6 +82,7 @@ int main(int argc, char **argv)
     ros::TransportHints hints = ros::TransportHints().udp().tcpNoDelay();
     ros::Subscriber path_sub = n.subscribe<ca_common::Trajectory>("path", 10, pathCallback);
     ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("odometry", 10, odometryCallback, hints);
+    ros::Subscriber hover_sub = n.subscribe<std_msgs::String>("hover", 10, setHoverCallback);
 
     ros::Rate loop_rate(parameters.loopRate);
     //CA::PetWatchdog pet;
@@ -82,6 +96,7 @@ int main(int argc, char **argv)
     trajectory_control::Command command;
     command.header.frame_id = "base_frame";
     command.header.seq=0;
+    hover = false;
     while (ros::ok())
     {
         loop_rate.sleep();
@@ -102,17 +117,25 @@ int main(int argc, char **argv)
             ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
 
         if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time)
-        {
-            ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
+        {            
             ca_common::Trajectory hoverMsg;
             hoverMsg.header.stamp = ros::Time::now();
             hoverMsg.header.frame_id = "/world";
-
             ca_common::TrajectoryPoint hoverTrajPoint;
-            hoverTrajPoint.position.x = curr_state.pose.position_m[0];
-            hoverTrajPoint.position.y = curr_state.pose.position_m[1];
-            hoverTrajPoint.position.z = curr_state.pose.position_m[2];
-            hoverTrajPoint.heading = curr_state.pose.orientation_rad[2];
+            if(!hover)
+            {
+                ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to velocity hold hover");
+                hoverTrajPoint.position.x = curr_state.pose.position_m[0];
+                hoverTrajPoint.position.y = curr_state.pose.position_m[1];
+                hoverTrajPoint.position.z = curr_state.pose.position_m[2];
+                hoverTrajPoint.heading = curr_state.pose.orientation_rad[2];
+            }
+            else
+            {
+                ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
+                hoverTrajPoint.position = hover_traj_point.position;
+                hoverTrajPoint.heading = hover_traj_point.heading;
+            }
 
             hoverMsg.trajectory.push_back(hoverTrajPoint);
 
