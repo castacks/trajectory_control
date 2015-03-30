@@ -120,13 +120,14 @@ target_link_libraries(trajectory_control
 trajectoryControlLib
 ${catkin_LIBRARIES}
 )
+add_dependencies(trajectory_control trajectory_control_generate_messages_cpp)
 
 add_executable(plot_traj_control  src/plotController.cpp)
 target_link_libraries(plot_traj_control
 trajectoryControlLib
 ${catkin_LIBRARIES}
 )
-
+add_dependencies(plot_traj_control trajectory_control_generate_messages_cpp)
 #rosbuild_add_executable(mk_model src/mk_model.cpp)
 #target_link_libraries(mk_model mkModelLib)
 ## Add cmake target dependencies of the executable/library
