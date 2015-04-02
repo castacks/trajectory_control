@@ -113,6 +113,7 @@ include_directories(
 # )
 
 add_library(trajectoryControlLib src/trajectory_control_lib.cpp)
+add_dependencies(trajectoryControlLib trajectory_control_generate_messages_cpp ca_common_generate_messages_cpp)
 
 ## Declare a cpp executable
 add_executable(trajectory_control src/trajectory_control.cpp)
@@ -120,7 +121,7 @@ target_link_libraries(trajectory_control
 trajectoryControlLib
 ${catkin_LIBRARIES}
 )
-add_dependencies(trajectory_control trajectory_control_generate_messages_cpp)
+add_dependencies(trajectory_control trajectory_control_generate_messages_cpp ca_common_generate_messages_cpp)
 
 add_executable(plot_traj_control  src/plotController.cpp)
 target_link_libraries(plot_traj_control
