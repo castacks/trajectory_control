@@ -132,8 +132,10 @@ int main(int argc, char **argv)
             }
             else
             {
-                ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
-                hoverTrajPoint.position = hover_traj_point.position;
+                //ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
+                ROS_WARN_STREAM("Hovering At::"<<hover_traj_point.position.x<<"::"<<hover_traj_point.position.y<<"::"
+					<<hover_traj_point.position.z); 
+		hoverTrajPoint.position = hover_traj_point.position;
                 hoverTrajPoint.heading = hover_traj_point.heading;
             }
 
