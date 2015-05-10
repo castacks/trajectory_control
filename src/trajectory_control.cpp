@@ -11,11 +11,11 @@
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
 #include <trajectory_control/Command.h>
-//#include <riverine_watchdog/watchdog.h>
+
 using namespace CA;
 
-visualization_msgs::Marker odom_marker;
-ros::Publisher marker_pub;
+//visualization_msgs::Marker odom_marker;
+//ros::Publisher marker_pub;
 
 CA::Trajectory path;
 
@@ -48,11 +48,18 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg)
 
 void setHoverCallback(const std_msgs::String::ConstPtr & msg)
 {
-    hover_traj_point.position.x = curr_state.pose.position_m[0];
-    hover_traj_point.position.y = curr_state.pose.position_m[1];
-    hover_traj_point.position.z = curr_state.pose.position_m[2];
-    hover_traj_point.heading = curr_state.pose.orientation_rad[2];
-    hover = true;
+
+    std::string cmd = msg->data;
+    if(cmd.compare("position")==0){
+        hover_traj_point.position.x = curr_state.pose.position_m[0];
+        hover_traj_point.position.y = curr_state.pose.position_m[1];
+        hover_traj_point.position.z = curr_state.pose.position_m[2];
+        hover_traj_point.heading = curr_state.pose.orientation_rad[2];
+        hover = true;
+        return;
+    }
+    hover = false;
+    return;
 }
 
 
@@ -78,7 +85,7 @@ int main(int argc, char **argv)
     nav_msgs::Odometry lookaheadpose;
     State lookheadstate;
 
-    marker_pub = n.advertise<visualization_msgs::Marker>("goal_markers", 1);
+  //  marker_pub = n.advertise<visualization_msgs::Marker>("goal_markers", 1);
     ros::TransportHints hints = ros::TransportHints().udp().tcpNoDelay();
     ros::Subscriber path_sub = n.subscribe<ca_common::Trajectory>("path", 10, pathCallback);
     ros::Subscriber odometry_sub = n.subscribe<nav_msgs::Odometry>("odometry", 10, odometryCallback, hints);
@@ -145,6 +152,7 @@ int main(int argc, char **argv)
             controllerState.closestIdx = 0.0;
 
         }
+
 
 		//ROS_ERROR_STREAM("curr_state "<<curr_state<<" path "<<path<<" lookheadstate "<<lookheadstate);
         MkVelocityControlCommand commandres = controller.positionControl(dt,curr_state,controllerState,path,lookheadstate);
