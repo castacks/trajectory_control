@@ -45,7 +45,7 @@ namespace CA
     bool loadParameters(ros::NodeHandle &n)
     {
       bool found = true;
-     
+
       found = found && n.getParam("crossTrackP", crossTrackP);
       found = found && n.getParam("crossTrackI", crossTrackI);
       found = found && n.getParam("crossTrackD", crossTrackD);
@@ -64,7 +64,7 @@ namespace CA
       return found;
     }
   };
-  
+
 
   class TrajectoryControl
   {
