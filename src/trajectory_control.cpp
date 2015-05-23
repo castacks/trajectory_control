@@ -48,7 +48,8 @@ void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg)
 
 void setHoverCallback(const std_msgs::String::ConstPtr & msg)
 {
-
+    ca_common::Trajectory emptyMsg;
+    path.fromMsg(emptyMsg);
     std::string cmd = msg->data;
     if(cmd.compare("position")==0){
         hover_traj_point.position.x = curr_state.pose.position_m[0];
