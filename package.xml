@@ -48,6 +48,7 @@
   <build_depend>mk_model</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>riverine_watchdog</build_depend>
+  <build_depend>diagnostic_status_refiner</build_depend>
   
   
   <run_depend>roscpp</run_depend>  
@@ -58,6 +59,7 @@
   <run_depend>mk_model</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>riverine_watchdog</run_depend>
+  <run_depend>diagnostic_status_refiner</run_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- You can specify that this package is a metapackage here: -->

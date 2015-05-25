@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 	mk_model
 	visualization_msgs
 	riverine_watchdog
+	diagnostic_status_refiner
 )
 
 #Qt stuff
@@ -91,7 +92,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES 
-  CATKIN_DEPENDS 	roscpp std_msgs geometry_msgs nav_msgs ca_common mk_model visualization_msgs riverine_watchdog
+  CATKIN_DEPENDS 	roscpp std_msgs geometry_msgs nav_msgs ca_common mk_model visualization_msgs riverine_watchdog diagnostic_status_refiner
 #  DEPENDS 
 )
 

@@ -11,12 +11,14 @@
 #include <mk_model/mk_common.h>
 #include <trajectory_control/trajectory_control_lib.h>
 #include <trajectory_control/Command.h>
+#include <diagnostic_status_refiner/diagnostic_status_refiner.h>
 
 using namespace CA;
 
 //visualization_msgs::Marker odom_marker;
 //ros::Publisher marker_pub;
 
+ca::DiagStatusRefiner* refiner;
 CA::Trajectory path;
 
 
@@ -63,7 +65,9 @@ void setHoverCallback(const std_msgs::String::ConstPtr & msg)
     return;
 }
 
-
+void errorDiagnostics(diagnostic_updater::DiagnosticStatusWrapper& status){
+  refiner->AggregateEntries(status);
+}
 
 
 int main(int argc, char **argv)
@@ -100,6 +104,14 @@ int main(int argc, char **argv)
         //return -1;
     //}
 
+    //Diagnostics
+    ca::DiagHelperClass errors;
+    errors.updater_->setHardwareID("traj_control");
+    errors.updater_->add("Trajectory Control Loop", errorDiagnostics);
+    refiner = new ca::DiagStatusRefiner("errors");
+    ros::Timer diag_timer = n.createTimer(ros::Duration(1.0), &ca::DiagHelperClass::callback,&errors);
+    std::string error_msg;
+
     double dt = 1/parameters.loopRate;
     trajectory_control::Command command;
     command.header.frame_id = "base_frame";
@@ -112,7 +124,9 @@ int main(int argc, char **argv)
         double timediff = ros::Time::now().toSec() - curr_state.time_s;
         if(timediff > 1.0)
         {
+            error_msg= "Trajectory_control: Odometry is more than one second old, no command issued"+boost::to_string(timediff)+ " "+boost::to_string(curr_state.time_s);
             ROS_ERROR_STREAM_THROTTLE(1, "Trajectory_control: Odometry is more than one second old, no command issued"<<timediff<< " "<< curr_state.time_s);
+            refiner->AddRefinerEntry("traj control loop", 1, error_msg);
             continue;
         }
 
@@ -121,8 +135,11 @@ int main(int argc, char **argv)
         else
             pet.alive();*/
 
-        if ((ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time)
+        if ((ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time){
             ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
+            error_msg= boost::to_string((ros::Time::now() - lastPlan).toSec());
+            refiner->AddRefinerEntry("Trajectory age: ", 2, error_msg); 
+        }
 
         if(path.size() < 1 || (ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time)
         {            
@@ -133,6 +150,8 @@ int main(int argc, char **argv)
             if(!hover)
             {
                 ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to velocity hold hover");
+                error_msg="Path does not contain any waypoints, default to velocity hold hover";
+                refiner->AddRefinerEntry("Trajectory_control: ", 2, error_msg); 
                 hoverTrajPoint.position.x = curr_state.pose.position_m[0];
                 hoverTrajPoint.position.y = curr_state.pose.position_m[1];
                 hoverTrajPoint.position.z = curr_state.pose.position_m[2];
@@ -141,9 +160,12 @@ int main(int argc, char **argv)
             else
             {
                 //ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to position hold hover");
-                ROS_WARN_STREAM("Hovering At::"<<hover_traj_point.position.x<<"::"<<hover_traj_point.position.y<<"::"
-					<<hover_traj_point.position.z); 
-		hoverTrajPoint.position = hover_traj_point.position;
+                ROS_WARN_STREAM("Hovering At:"<<hover_traj_point.position.x<<"::"<<hover_traj_point.position.y<<"::"
+                  <<hover_traj_point.position.z); 
+                error_msg=boost::to_string(hover_traj_point.position.x)+"::"+boost::to_string(hover_traj_point.position.y)
+                  +"::"+boost::to_string(hover_traj_point.position.z);
+                refiner->AddRefinerEntry("Hovering At: ", 1, error_msg); 
+                hoverTrajPoint.position = hover_traj_point.position;
                 hoverTrajPoint.heading = hover_traj_point.heading;
             }
 
