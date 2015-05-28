@@ -30,11 +30,11 @@ bool hover;
 
 TrajectoryControlState controllerState;
 ros::Time lastPlan;
+boost::shared_ptr<diagnostic_updater::TopicDiagnostic> odomFreqDiag;
 
 void pathCallback(const ca_common::Trajectory::ConstPtr& msg);
 void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg);
 void visualizeState(CA::State state, Eigen::Vector3d color, std::string frame_id, std::string ns);
-
 
 void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 {
@@ -46,6 +46,7 @@ void pathCallback(const ca_common::Trajectory::ConstPtr& msg)
 void odometryCallback(const nav_msgs::Odometry::ConstPtr & msg)
 {
     curr_state =msgc(*msg);
+    if(odomFreqDiag) odomFreqDiag->tick(msg->header.stamp);
 }
 
 void setHoverCallback(const std_msgs::String::ConstPtr & msg)
@@ -110,6 +111,15 @@ int main(int argc, char **argv)
     errors.updater_->add("Trajectory Control Loop", errorDiagnostics);
     refiner = new ca::DiagStatusRefiner("errors");
     ros::Timer diag_timer = n.createTimer(ros::Duration(1.0), &ca::DiagHelperClass::callback,&errors);
+    double target=100.0;
+    const double period = 1.0 / target; 
+    
+    diagnostic_updater::FrequencyStatusParam freqParam(&target, &target, 0.1, 10);
+    diagnostic_updater::TimeStampStatusParam timeParam(0, period *2);
+    odomFreqDiag.reset(new diagnostic_updater::TopicDiagnostic("odomfreq", 
+                                                     *errors.updater_, 
+                                                     freqParam,
+                                                     timeParam));    
     std::string error_msg;
 
     double dt = 1/parameters.loopRate;
