@@ -18,6 +18,8 @@ namespace CA
     double crossTrackD;
     double crossTrackPZ;
     double crossTrackDZ;
+    double alongTrackP;
+    double headingRateP;
     double loopRate;
     double maxSpeed;
     double lookAhead;
@@ -32,6 +34,8 @@ namespace CA
       crossTrackD(5.0),
       crossTrackPZ(0.0),
       crossTrackDZ(0.0),
+      alongTrackP(0.0),
+      headingRateP(0.0),
       loopRate(5.0),
       maxSpeed(5.0),
       lookAhead(0.5),
@@ -54,6 +58,8 @@ namespace CA
       found = found && n.getParam("crossTrackPZ", crossTrackPZ);
       found = found && n.getParam("crossTrackDZ", crossTrackDZ);
 
+      found = found && n.getParam("alongTrackP", alongTrackP);
+
       found = found && n.getParam("loopRate", loopRate);
       found = found && n.getParam("maxSpeed", maxSpeed);
       found = found && n.getParam("lookAhead", lookAhead);
@@ -61,6 +67,7 @@ namespace CA
       found = found && n.getParam("trackingThreshold", trackingThreshold);
       found = found && n.getParam("deccelMax", deccelMax);
       found = found && n.getParam("reactionTime", reactionTime);
+      found = found && n.getParam("headingRateP", headingRateP);
       return found;
     }
   };

@@ -51,7 +51,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     double stoppingDistance =  math_tools::stoppingDistance(pr.deccelMax,pr.reactionTime,speed);
     double distanceToEnd = path.distanceToEnd(controlstate.closestIdx, 5.0 + stoppingDistance,pr.lookAheadAngle, &nearingEnd, &sharpCorner);//Added an offset to prevent problems at low speed
     double totalSpeed = std::max(0.5,pursuit_state.rates.velocity_mps.norm());
-    //ROS_ERROR_STREAM("nearingEnd "<< (nearingEnd?1:0) <<" sharpCorner "<<(sharpCorner?1:0) <<" distanceToEnd "<<distanceToEnd<< " stoppingDistance "<<stoppingDistance);
+//    ROS_ERROR_STREAM("nearingEnd "<< (nearingEnd?1:0) <<" sharpCorner "<<(sharpCorner?1:0) <<" distanceToEnd "<<distanceToEnd<< " stoppingDistance "<<stoppingDistance);
     if (nearingEnd)
     {
 
@@ -86,7 +86,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
         desired_velocity *= pr.maxSpeed;
     }
 
-    //  ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
+//      ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
     //ROS_ERROR_STREAM("PATH "<<path);
     //ROS_ERROR_STREAM(std::fixed<<"curr_state: "<<curr_state.pose.position_m<<" closest_state: "<<closest_state.pose.position_m<<" pursuit_state: "<<pursuit_state.pose.position_m);
 
@@ -119,13 +119,13 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
 		}
     controlstate.prev_cross_track_error = cross_track_error;
 
-    //   ROS_INFO_STREAM("Desired vel: "<<desired_velocity<<" act: "<<curr_state.rates.velocity_mps);
+//       ROS_INFO_STREAM("Desired vel: "<<desired_velocity.norm()<<" act: "<<curr_state.rates.velocity_mps.norm());
     //  ROS_INFO_STREAM("Cross Track U" <<  u_cross_track);
 
     //ROS_INFO_STREAM("Path Normal"  << path_normal );
     //ROS_INFO_STREAM("Path Tangent"  << path_tangent);
 
-    Vector3D commandv = desired_velocity +  u_cross_track * path_normal;
+    Vector3D commandv = pr.alongTrackP*desired_velocity +  u_cross_track * path_normal;
 
     //Do separate terms for the z control:
     double z_trackerror =   zError - controlstate.prev_z_track_error;
@@ -148,6 +148,15 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
     command.velocity = commandv;
     command.heading = pursuit_state.pose.orientation_rad[2];
+
+    double heading_diff = pursuit_state.pose.orientation_rad[2] - curr_state.pose.orientation_rad[2];
+    if(heading_diff<-M_PI)
+        heading_diff +=2*M_PI;
+    else if(heading_diff>M_PI)
+        heading_diff -= 2*M_PI;
+    command.headingrate = pr.headingRateP*heading_diff;
+
+//    ROS_INFO("Heading Diff: %f",heading_diff*180/M_PI);
 
     //Check output invariants:
     if(!command.isfinite())

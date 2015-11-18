@@ -12,6 +12,8 @@
 #include <trajectory_control/trajectory_control_lib.h>
 #include <trajectory_control/Command.h>
 #include <diagnostic_status_refiner/diagnostic_status_refiner.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 
 using namespace CA;
 
@@ -87,6 +89,7 @@ int main(int argc, char **argv)
     TrajectoryControl controller(parameters);
     controller.debugInit(n);
     ros::Publisher command_pub = n.advertise<trajectory_control::Command>("command", 100);
+    ros::Publisher twist_command_pub = n.advertise<geometry_msgs::TwistStamped>("/command/twist", 100);
     ros::Publisher pubLookAheadState = n.advertise<nav_msgs::Odometry>("lookaheadpose", 100);
     nav_msgs::Odometry lookaheadpose;
     State lookheadstate;
@@ -196,6 +199,14 @@ int main(int argc, char **argv)
         command.heading      = commandres.heading;
         command.headingrate  = commandres.headingrate;
         command_pub.publish(command);
+
+
+        geometry_msgs::TwistStamped twist;
+        twist.header = command.header;
+        twist.twist.linear = command.velocity;
+        twist.twist.angular.x=twist.twist.angular.y=0.0;
+        twist.twist.angular.z=command.headingrate;
+        twist_command_pub.publish(twist);
 
         lookaheadpose = msgc(lookheadstate);
         lookaheadpose.header = command.header;
