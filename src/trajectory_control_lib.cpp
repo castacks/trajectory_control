@@ -126,7 +126,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     speedRestriction = min(speedRestriction,pr.maxSpeed);
     speedRestriction = min(speedRestriction,speed+pr.deccelMax*dt);
 
-    ROS_INFO("RestirctedSpeed= %f , Radius= %f",speedRestriction,fabs(radius));
+    ROS_INFO_THROTTLE(1,"RestirctedSpeed= %f , Radius= %f",speedRestriction,fabs(radius));
 
     if(desired_velocity.norm() > speedRestriction)
     {
