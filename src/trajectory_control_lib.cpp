@@ -43,6 +43,48 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     bool isHovering, nearingEnd, sharpCorner;
     State closest_state = path.projectOnTrajInterp(curr_state, &isHovering,&controlstate.closestIdx);
 
+
+    double radius = 4000;
+    {
+        int idx0 = std::min(std::max(0.0,controlstate.closestIdx-1),(double)path.size()-1);
+        int idx1 = std::min(std::max(0.0,controlstate.closestIdx),(double)path.size()-1);
+        int idx2 = std::min(std::max(0.0,controlstate.closestIdx+1),(double)path.size()-1);
+
+
+        State s0 = path.stateAt(idx0);
+        State s1 = path.stateAt(idx1);
+        State s2 = path.stateAt(idx2);
+
+        double ci = 2*(s2.pose.position_m[1]*(s1.pose.position_m[0]-s0.pose.position_m[0]) + s1.pose.position_m[1]*(s0.pose.position_m[0]-s2.pose.position_m[0]) + s0.pose.position_m[1]*(s2.pose.position_m[0]-s1.pose.position_m[0]));
+        double x_ic = (s0.pose.position_m[0]*s0.pose.position_m[0]+s0.pose.position_m[1]*s0.pose.position_m[1])*(s1.pose.position_m[1]-s2.pose.position_m[1]) +
+                (s1.pose.position_m[0]*s1.pose.position_m[0]+s1.pose.position_m[1]*s1.pose.position_m[1])*(s2.pose.position_m[1]-s0.pose.position_m[1]) +
+                (s2.pose.position_m[0]*s2.pose.position_m[0]+s2.pose.position_m[1]*s2.pose.position_m[1])*(s0.pose.position_m[1]-s1.pose.position_m[1]);
+
+        double y_ic = (s0.pose.position_m[0]*s0.pose.position_m[0]+s0.pose.position_m[1]*s0.pose.position_m[1])*(s2.pose.position_m[0]-s1.pose.position_m[0]) +
+                (s1.pose.position_m[0]*s1.pose.position_m[0]+s1.pose.position_m[1]*s1.pose.position_m[1])*(s0.pose.position_m[0]-s2.pose.position_m[0]) +
+                (s2.pose.position_m[0]*s2.pose.position_m[0]+s2.pose.position_m[1]*s2.pose.position_m[1])*(s1.pose.position_m[0]-s0.pose.position_m[0]);
+
+//        ROS_INFO("IDX %d %d %d %f",idx0,idx1,idx2,ci);
+
+        if(ci!=0)
+        {
+            x_ic = x_ic/ci;
+            y_ic = y_ic/ci;
+
+            Eigen::Vector2d c,xi,r;
+            c[0]=x_ic;
+            c[1]=y_ic;
+
+            xi[0]=s1.pose.position_m[0];
+            xi[1]=s1.pose.position_m[1];
+
+            r = c - xi;
+            radius = r.norm();
+//            ROS_INFO("Radius = %f",radius);
+        }
+
+    }
+
     //This is the state we will control to. This looks ahead based on the current speed to account for control reaction delays.
     double speed = curr_state.rates.velocity_mps.norm();
     double lookaheadDist = std::max(0.3,pr.lookAhead * speed);
@@ -79,11 +121,18 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     }
     curr_to_closest[2] = 0;
 
-    if(desired_velocity.norm() > pr.maxSpeed)
+    double amax = pr.deccelMax;
+    double speedRestriction = sqrt(amax*fabs(radius));
+    speedRestriction = min(speedRestriction,pr.maxSpeed);
+    speedRestriction = min(speedRestriction,speed+pr.deccelMax*dt);
+
+    ROS_INFO("RestirctedSpeed= %f , Radius= %f",speedRestriction,fabs(radius));
+
+    if(desired_velocity.norm() > speedRestriction)
     {
-        ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed"<<desired_velocity.norm()<<" > "<<pr.maxSpeed);
+        ROS_WARN_STREAM_THROTTLE(10, "Trajectory_control: Commanded path exceeds maximum allowed speed"<<desired_velocity.norm()<<" > "<<speedRestriction);
         math_tools::normalize(desired_velocity);
-        desired_velocity *= pr.maxSpeed;
+        desired_velocity *= speedRestriction;
     }
 
 //      ROS_INFO_STREAM(std::fixed<<"CP: "<<curr_state.pose.position_m<<" CS: "<<closest_state.pose.position_m<<" PP: "<<pursuit_state.pose.position_m);
