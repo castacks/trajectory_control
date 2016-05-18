@@ -1,3 +1,11 @@
+/*
+* Copyright (c) 2016 Carnegie Mellon University, Author <basti@andrew.cmu.edu, gdubey@andrew.cmu.edu>
+*
+* For License information please see the LICENSE file in the root directory.
+*
+*/
+
+
 #include <ros/ros.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/Quaternion.h>
