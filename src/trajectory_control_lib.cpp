@@ -1,3 +1,11 @@
+/*
+* Copyright (c) 2016 Carnegie Mellon University, Author <basti@andrew.cmu.edu, gdubey@andrew.cmu.edu>
+*
+* For License information please see the LICENSE file in the root directory.
+*
+*/
+
+
 #include <cstdlib>
 #include <algorithm>
 #include <ca_common/Trajectory.h>
