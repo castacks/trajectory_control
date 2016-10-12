@@ -124,7 +124,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     double amax = pr.deccelMax;
     double speedRestriction = sqrt(amax*fabs(radius));
     speedRestriction = min(speedRestriction,pr.maxSpeed);
-    speedRestriction = min(speedRestriction,speed+pr.deccelMax*dt);
+//    speedRestriction = min(speedRestriction,speed+pr.deccelMax*dt);
 
     ROS_INFO_THROTTLE(1,"RestirctedSpeed= %f , Radius= %f",speedRestriction,fabs(radius));
 
