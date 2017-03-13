@@ -157,7 +157,7 @@ int main(int argc, char **argv)
             pet.alive();*/
 
         if ((ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time){
-            ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
+            //ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
             error_msg= boost::to_string((ros::Time::now() - lastPlan).toSec());
             refiner->AddRefinerEntry("Trajectory age: ", 2, error_msg); 
         }
