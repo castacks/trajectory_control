@@ -219,6 +219,7 @@ int main(int argc, char **argv)
         lookaheadpose = msgc(lookheadstate);
         lookaheadpose.header = command.header;
         lookaheadpose.header.frame_id = "world";
+        lookaheadpose.child_frame_id = "lookahead_frame";
 
         pubLookAheadState.publish(lookaheadpose);
     }

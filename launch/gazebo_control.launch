@@ -1,0 +1,32 @@
+<launch>
+    <!-- remap from="/trajectory_control/odometry" to="/dji_sdk/odometry" / -->
+    <remap from="/trajectory_control/odometry" to="/ground_truth/state" />	
+    <remap from="/trajectory_control/path" to="/local_planner/trajectory" />
+  <node name="trajectory_control" pkg="trajectory_control" type="trajectory_control" output="screen">   
+    <param name="trajectory_expiration_time" type="double" value="1000.0" /> 
+    <param name="crossTrackP" type="double" value="1.8" />
+    <param name="crossTrackI" type="double" value="0.00" />
+    <param name="crossTrackD" type="double" value="0.0" />
+    <param name="crossTrackIMax" type="double" value="1.0" />
+
+    <param name="crossTrackPZ" type="double" value="5.4" />
+    <param name="crossTrackDZ" type="double" value="0.2" />
+
+    <param name="alongTrackP" type="double" value="2.0" />
+
+    <param name="headingRateP" type="double" value="4.2" />
+
+    <param name="loopRate" type="double" value="50.0" />
+    <param name="maxSpeed" type="double" value="10.5" />
+    <param name="lookAhead" type="double" value="0.5" />
+    <!--param name="lookAheadAngle" type="double" value="0.7" / -->
+    <param name="lookAheadAngle" type="double" value="0.70" /> <!-- 0.35 -->
+    <param name="trackingThreshold" type="double" value="1.0" />
+    <param name="deccelMax" type="double" value="1.80" />
+    <param name="reactionTime" type="double" value="1.101" />    
+  </node>
+<node name="lookahead_tf_2" pkg="odom_tf_utils" type="odom_tf_utils_odom_to_tf" args="odom:=/trajectory_control/lookaheadpose"/>
+</launch>
+
+
+
