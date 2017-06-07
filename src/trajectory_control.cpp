@@ -157,7 +157,7 @@ int main(int argc, char **argv)
             pet.alive();*/
 
         if ((ros::Time::now() - lastPlan).toSec() > trajectory_expiration_time){
-            ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
+            //ROS_ERROR_STREAM_THROTTLE(1, "Trajectory age: " << (ros::Time::now() - lastPlan).toSec());
             error_msg= boost::to_string((ros::Time::now() - lastPlan).toSec());
             refiner->AddRefinerEntry("Trajectory age: ", 2, error_msg); 
         }
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
             ca_common::TrajectoryPoint hoverTrajPoint;
             if(!hover)
             {
-                ROS_WARN_STREAM("Trajectory_control: Path does not contain any waypoints, default to velocity hold hover");
+                ROS_WARN_STREAM_THROTTLE(1, "Trajectory_control: Path does not contain any waypoints, default to velocity hold hover");
                 error_msg="Path does not contain any waypoints, default to velocity hold hover";
                 refiner->AddRefinerEntry("Trajectory_control: ", 2, error_msg); 
                 hoverTrajPoint.position.x = curr_state.pose.position_m[0];
