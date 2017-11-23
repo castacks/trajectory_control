@@ -117,7 +117,13 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
         pursuit_state.rates.velocity_mps *=maxDesiredSpeed;
 
     }
-    Vector3D desired_velocity = pursuit_state.rates.velocity_mps;
+    Vector3D desired_velocity = pursuit_state.rates.velocity_mps; //desired vel on pursuit state, this is already on the traj but vel is based on closest wp
+    double desired_speed = math_tools::normalize(desired_velocity); // lets get desired speed and we will find the apt vel vector next
+    desired_velocity = (pursuit_state.pose.position_m - curr_state.pose.position_m); // this is the vector along path
+    math_tools::normalize(desired_velocity);
+    desired_velocity *= desired_speed;
+
+//    desired_velocity *= math_tools::normalize(pursuit_state.rates.velocity_mps);
     Vector3D curr_to_closest = closest_state.pose.position_m - curr_state.pose.position_m;
     double zError = curr_to_closest[2];
     //Separate x,y from z control
@@ -131,7 +137,7 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
 
     double amax = pr.deccelMax;
     double speedRestriction = sqrt(amax*fabs(radius));
-    speedRestriction = min(speedRestriction,pr.maxSpeed);
+    speedRestriction = min(min(speedRestriction,pr.maxSpeed),desired_speed);
 //    speedRestriction = min(speedRestriction,speed+pr.deccelMax*dt);
 
     ROS_INFO_THROTTLE(1,"RestirctedSpeed= %f , Radius= %f",speedRestriction,fabs(radius));
@@ -147,10 +153,15 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
     //ROS_ERROR_STREAM("PATH "<<path);
     //ROS_ERROR_STREAM(std::fixed<<"curr_state: "<<curr_state.pose.position_m<<" closest_state: "<<closest_state.pose.position_m<<" pursuit_state: "<<pursuit_state.pose.position_m);
 
-    Vector3D path_tangent = desired_velocity;
+    int idx1 = std::min(std::max(0.0,controlstate.closestIdx),(double)path.size()-1);
+    int idx2 = std::min(std::max(0.0,controlstate.closestIdx+1),(double)path.size()-1);
+    State s1 = path.stateAt(idx1);
+    State s2 = path.stateAt(idx2);
+    Vector3D path_tangent = s2.pose.position_m - s1.pose.position_m;//desired_velocity;
     math_tools::normalize( path_tangent);
     Vector3D curr_to_path = curr_to_closest - path_tangent * math_tools::dot(path_tangent,curr_to_closest);
-    Vector3D path_normal = curr_to_path;
+    Vector3D z_vec(0,0,1);
+    Vector3D path_normal = math_tools::cross(path_tangent,z_vec);//curr_to_path;
     math_tools::normalize(path_normal);
     double cross_track_error = math_tools::dot(curr_to_closest, path_normal);
     double cross_track_error_d = cross_track_error - controlstate.prev_cross_track_error;
@@ -199,9 +210,9 @@ MkVelocityControlCommand TrajectoryControl::positionControl(double dt, State cur
                    pr.crossTrackDZ * z_trackerror/dt;
     commandv[2] = desired_velocity[2] + ztrack;
     //  ROS_INFO_STREAM(dt<<" "<<commandv[2]<<" "<<desired_velocity[2]<<" "<<curr_to_closest[2]<<" "<<z_trackerror);
-    if(commandv.norm() > totalSpeed)
+    if(commandv.norm() > min(min(totalSpeed,speedRestriction),pr.maxSpeed))
     {
-        commandv *= (totalSpeed/commandv.norm());
+        commandv *= (min(min(totalSpeed,speedRestriction),pr.maxSpeed)/commandv.norm());
     }
     command.velocity = commandv;
     command.heading = pursuit_state.pose.orientation_rad[2];
